@@ -159,41 +159,40 @@ static int UTF8CharLength(TextEditor::Char c)
 }
 
 // "Borrowed" from ImGui source
+// Based on stb_to_utf8() from github.com/nothings/stb/+
 static inline int ImTextCharToUtf8(char* buf, int buf_size, unsigned int c)
 {
-	if (c < 0x80)
-	{
-		buf[0] = (char)c;
-		return 1;
-	}
-	if (c < 0x800)
-	{
-		if (buf_size < 2) return 0;
-		buf[0] = (char)(0xc0 + (c >> 6));
-		buf[1] = (char)(0x80 + (c & 0x3f));
-		return 2;
-	}
-	if (c >= 0xdc00 && c < 0xe000)
-	{
-		return 0;
-	}
-	if (c >= 0xd800 && c < 0xdc00)
-	{
-		if (buf_size < 4) return 0;
-		buf[0] = (char)(0xf0 + (c >> 18));
-		buf[1] = (char)(0x80 + ((c >> 12) & 0x3f));
-		buf[2] = (char)(0x80 + ((c >> 6) & 0x3f));
-		buf[3] = (char)(0x80 + ((c) & 0x3f));
-		return 4;
-	}
-	//else if (c < 0x10000)
-	{
-		if (buf_size < 3) return 0;
-		buf[0] = (char)(0xe0 + (c >> 12));
-		buf[1] = (char)(0x80 + ((c >> 6) & 0x3f));
-		buf[2] = (char)(0x80 + ((c) & 0x3f));
-		return 3;
-	}
+    if (c < 0x80)
+    {
+        buf[0] = (char)c;
+        return 1;
+    }
+    if (c < 0x800)
+    {
+        if (buf_size < 2) return 0;
+        buf[0] = (char)(0xc0 + (c >> 6));
+        buf[1] = (char)(0x80 + (c & 0x3f));
+        return 2;
+    }
+    if (c < 0x10000)
+    {
+        if (buf_size < 3) return 0;
+        buf[0] = (char)(0xe0 + (c >> 12));
+        buf[1] = (char)(0x80 + ((c>> 6) & 0x3f));
+        buf[2] = (char)(0x80 + ((c ) & 0x3f));
+        return 3;
+    }
+    if (c <= 0x10FFFF)
+    {
+        if (buf_size < 4) return 0;
+        buf[0] = (char)(0xf0 + (c >> 18));
+        buf[1] = (char)(0x80 + ((c >> 12) & 0x3f));
+        buf[2] = (char)(0x80 + ((c >> 6) & 0x3f));
+        buf[3] = (char)(0x80 + ((c ) & 0x3f));
+        return 4;
+    }
+    // Invalid code point, the max unicode is 0x10FFFF
+    return 0;
 }
 
 void TextEditor::Advance(Coordinates & aCoordinates) const
