@@ -7,7 +7,6 @@
 #include "TextEditor.h"
 
 #define IMGUI_DEFINE_MATH_OPERATORS
-#include "imgui.h" // for imGui::GetCurrentWindow()
 
 // TODO
 // - multiline comments vs single-line: latter is blocking start of a ML
@@ -323,6 +322,7 @@ void TextEditor::AddUndo(UndoRecord& aValue)
 
 TextEditor::Coordinates TextEditor::ScreenPosToCoordinates(const ImVec2& aPosition) const
 {
+#ifndef P3S_CLIENT_HEADLESS
 	ImVec2 origin = ImGui::GetCursorScreenPos();
 	ImVec2 local(aPosition.x - origin.x, aPosition.y - origin.y);
 
@@ -371,6 +371,10 @@ TextEditor::Coordinates TextEditor::ScreenPosToCoordinates(const ImVec2& aPositi
 	}
 
 	return SanitizeCoordinates(Coordinates(lineNo, columnCoord));
+    
+#else
+    return Coordinates(0, 0);
+#endif
 }
 
 TextEditor::Coordinates TextEditor::FindWordStart(const Coordinates & aFrom) const
@@ -676,6 +680,7 @@ std::string TextEditor::GetWordAt(const Coordinates & aCoords) const
 
 ImU32 TextEditor::GetGlyphColor(const Glyph & aGlyph) const
 {
+#ifndef P3S_CLIENT_HEADLESS
 	if (!mColorizerEnabled)
 		return mPalette[(int)PaletteIndex::Default];
 	if (aGlyph.mComment)
@@ -693,10 +698,15 @@ ImU32 TextEditor::GetGlyphColor(const Glyph & aGlyph) const
 		return ImU32(c0 | (c1 << 8) | (c2 << 16) | (c3 << 24));
 	}
 	return color;
+#else
+    return 0;
+#endif
 }
 
 void TextEditor::HandleKeyboardInputs()
 {
+#ifndef P3S_CLIENT_HEADLESS
+
 	ImGuiIO& io = ImGui::GetIO();
 	auto shift = io.KeyShift;
 	auto ctrl = io.ConfigMacOSXBehaviors ? io.KeySuper : io.KeyCtrl;
@@ -773,10 +783,13 @@ void TextEditor::HandleKeyboardInputs()
 			io.InputQueueCharacters.resize(0);
 		}
 	}
+#endif
 }
 
 void TextEditor::HandleMouseInputs()
 {
+#ifndef P3S_CLIENT_HEADLESS
+
 	ImGuiIO& io = ImGui::GetIO();
 	auto shift = io.KeyShift;
 	auto ctrl = io.ConfigMacOSXBehaviors ? io.KeySuper : io.KeyCtrl;
@@ -849,10 +862,12 @@ void TextEditor::HandleMouseInputs()
 			}
 		}
 	}
+#endif
 }
 
 void TextEditor::Render()
 {
+#ifndef P3S_CLIENT_HEADLESS
 	/* Compute mCharAdvance regarding to scaled font size (Ctrl + mouse wheel)*/
 	const float fontSize = ImGui::GetFont()->CalcTextSizeA(ImGui::GetFontSize(), FLT_MAX, -1.0f, "#", nullptr, nullptr).x;
 	mCharAdvance = ImVec2(fontSize, ImGui::GetTextLineHeightWithSpacing() * mLineSpacing);
@@ -1116,10 +1131,12 @@ void TextEditor::Render()
 		ImGui::SetWindowFocus();
 		mScrollToCursor = false;
 	}
+#endif
 }
 
 void TextEditor::Render(const char* aTitle, const ImVec2& aSize, bool aBorder)
 {
+#ifndef P3S_CLIENT_HEADLESS
 	mWithinRender = true;
 	mTextChanged = false;
 	mCursorPositionChanged = false;
@@ -1151,6 +1168,7 @@ void TextEditor::Render(const char* aTitle, const ImVec2& aSize, bool aBorder)
 	ImGui::PopStyleColor();
 
 	mWithinRender = false;
+#endif
 }
 
 void TextEditor::SetText(const std::string & aText)
@@ -1909,6 +1927,7 @@ bool TextEditor::HasSelection() const
 
 void TextEditor::Copy()
 {
+#ifndef P3S_CLIENT_HEADLESS
 	if (HasSelection())
 	{
 		ImGui::SetClipboardText(GetSelectedText().c_str());
@@ -1924,6 +1943,7 @@ void TextEditor::Copy()
 			ImGui::SetClipboardText(str.c_str());
 		}
 	}
+#endif
 }
 
 void TextEditor::Cut()
@@ -1953,6 +1973,7 @@ void TextEditor::Cut()
 
 void TextEditor::Paste()
 {
+#ifndef P3S_CLIENT_HEADLESS
 	if (IsReadOnly())
 		return;
 
@@ -1979,6 +2000,7 @@ void TextEditor::Paste()
 		u.mAfter = mState;
 		AddUndo(u);
 	}
+#endif
 }
 
 bool TextEditor::CanUndo() const
@@ -2391,6 +2413,7 @@ void TextEditor::ColorizeInternal()
 
 float TextEditor::TextDistanceToLineStart(const Coordinates& aFrom) const
 {
+#ifndef P3S_CLIENT_HEADLESS
 	auto& line = mLines[aFrom.mLine];
 	float distance = 0.0f;
 	float spaceSize = ImGui::GetFont()->CalcTextSizeA(ImGui::GetFontSize(), FLT_MAX, -1.0f, " ", nullptr, nullptr).x;
@@ -2416,10 +2439,14 @@ float TextEditor::TextDistanceToLineStart(const Coordinates& aFrom) const
 	}
 
 	return distance;
+#else
+    return 0.0f;
+#endif
 }
 
 void TextEditor::EnsureCursorVisible()
 {
+#ifndef P3S_CLIENT_HEADLESS
 	if (!mWithinRender)
 	{
 		mScrollToCursor = true;
@@ -2449,12 +2476,17 @@ void TextEditor::EnsureCursorVisible()
 		ImGui::SetScrollX(std::max(0.0f, len + mTextStart - 4));
 	if (len + mTextStart > right - 4)
 		ImGui::SetScrollX(std::max(0.0f, len + mTextStart + 4 - width));
+#endif
 }
 
 int TextEditor::GetPageSize() const
 {
+#ifndef P3S_CLIENT_HEADLESS
 	auto height = ImGui::GetWindowHeight() - 20.0f;
 	return (int)floor(height / mCharAdvance.y);
+#else
+    return 0;
+#endif
 }
 
 TextEditor::UndoRecord::UndoRecord(

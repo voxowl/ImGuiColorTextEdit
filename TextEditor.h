@@ -8,7 +8,12 @@
 #include <unordered_map>
 #include <map>
 #include <regex>
-#include "imgui.h"
+
+#ifdef P3S_CLIENT_HEADLESS
+#include "HeadlessClient_ImGui.h"
+#else
+#include <imgui/imgui.h>
+#endif
 
 class TextEditor
 {
