@@ -12,7 +12,10 @@
 #ifdef P3S_CLIENT_HEADLESS
 #include "HeadlessClient_ImGui.h"
 #else
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Weverything"
 #include <imgui/imgui.h>
+#pragma GCC diagnostic pop
 #endif
 
 class TextEditor
